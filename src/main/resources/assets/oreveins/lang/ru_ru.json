@@ -1,0 +1,11 @@
+{
+  "itemGroup.oreveins": "Рудные жилы",
+  "block.oreveins.iron_ore_vein": "Жила железной руды",
+  "block.oreveins.gold_ore_vein": "Жила золотой руды",
+  "block.oreveins.diamond_ore_vein": "Жила алмазной руды",
+  "block.oreveins.emerald_ore_vein": "Жила изумрудной руды",
+  "block.oreveins.redstone_ore_vein": "Жила редстоуна",
+  "block.oreveins.lapis_ore_vein": "Жила лазурита",
+  "block.oreveins.coal_ore_vein": "Жила угля",
+  "block.oreveins.copper_ore_vein": "Жила меди"
+}
