@@ -1,0 +1,15 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "step": "underground_ores",
+  "features": [
+    "oreveins:iron_ore_vein",
+    "oreveins:gold_ore_vein",
+    "oreveins:diamond_ore_vein",
+    "oreveins:emerald_ore_vein",
+    "oreveins:redstone_ore_vein",
+    "oreveins:lapis_ore_vein",
+    "oreveins:coal_ore_vein",
+    "oreveins:copper_ore_vein"
+  ]
+}
