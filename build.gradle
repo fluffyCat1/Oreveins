@@ -43,14 +43,13 @@ repositories {
         content {
             includeGroup 'com.simibubi.create'
             includeGroup 'net.createmod.ponder'
+            includeGroup 'dev.engine-room.flywheel'
         }
     }
     maven {
-        url = 'https://maven.createmod.net' // Create, Ponder, Flywheel
+        url = 'https://maven.ithundxr.dev/snapshots' // Registrate
         content {
-            includeGroup 'com.simibubi.create'
-            includeGroup 'net.createmod.ponder'
-            includeGroup 'dev.engine-room.flywheel'
+            includeGroup 'com.tterrag.registrate'
         }
     }
 }
