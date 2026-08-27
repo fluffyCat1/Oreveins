@@ -6,6 +6,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -19,12 +22,15 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import java.util.List;
 
 /**
- * Ticks down while it has a redstone signal; once the timer hits zero it
- * mines the block directly below it (reusing the exact same
- * vein-node-aware drop logic as everything else - if the block below is
- * one of our ore veins, {@link OreNodeBlock}'s own getDrops/onRemove
- * handling kicks in automatically and it only takes a partial "hit", same
- * as being mined by hand or by Create's drill).
+ * Ticks down while it has a redstone signal; mining now takes
+ * {@link #MINE_DURATION_TICKS} ticks of visible progress (cracking texture
+ * overlay, same as a player slowly mining) instead of happening instantly,
+ * so there's something to see while it works. Once progress reaches 100%
+ * it actually mines the block below (reusing the exact same vein-node-aware
+ * drop logic as everything else - if it's one of our ore veins,
+ * {@link OreNodeBlock}'s own getDrops/onRemove handling kicks in
+ * automatically and it only takes a partial "hit", same as being mined by
+ * hand).
  *
  * The result is:
  *  1) pushed into any inventory touching one of the drill's 6 faces
@@ -35,7 +41,8 @@ import java.util.List;
  *  3) if that's also full, dropped on the ground so nothing is lost.
  */
 public class AutoDrillBlockEntity extends BlockEntity {
-    private static final int INTERVAL_TICKS = 20; // once per second while powered
+    /** How long (in ticks) a single mining cycle takes, cracks-overlay included. 40 ticks = 2s. */
+    private static final int MINE_DURATION_TICKS = 40;
 
     private final ItemStackHandler inventory = new ItemStackHandler(1) {
         @Override
@@ -49,10 +56,13 @@ public class AutoDrillBlockEntity extends BlockEntity {
         }
     };
 
-    private int cooldown = INTERVAL_TICKS;
+    private int progress = 0;
+    /** A stable "breaker id" for the crack-overlay packets - just needs to be unique-ish per block position. */
+    private final int breakerId;
 
     public AutoDrillBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.AUTO_DRILL.get(), pos, state);
+        this.breakerId = pos.hashCode();
     }
 
     public IItemHandler getItemHandler() {
@@ -64,20 +74,43 @@ public class AutoDrillBlockEntity extends BlockEntity {
             return;
         }
 
-        if (!level.hasNeighborSignal(pos)) {
-            return; // no redstone signal - idle
-        }
+        BlockPos targetPos = pos.below();
 
-        if (--be.cooldown > 0) {
+        if (!level.hasNeighborSignal(pos)) {
+            // No power: stop and clear any half-finished cracks.
+            if (be.progress > 0) {
+                be.progress = 0;
+                serverLevel.destroyBlockProgress(be.breakerId, targetPos, -1);
+            }
             return;
         }
-        be.cooldown = INTERVAL_TICKS;
 
-        BlockPos targetPos = pos.below();
         BlockState targetState = serverLevel.getBlockState(targetPos);
         if (targetState.isAir() || targetState.getDestroySpeed(serverLevel, targetPos) < 0) {
+            if (be.progress > 0) {
+                be.progress = 0;
+                serverLevel.destroyBlockProgress(be.breakerId, targetPos, -1);
+            }
             return; // nothing to mine, or unbreakable (bedrock etc.)
         }
+
+        be.progress++;
+
+        int stage = Mth.clamp((be.progress * 10) / MINE_DURATION_TICKS, 0, 9);
+        serverLevel.destroyBlockProgress(be.breakerId, targetPos, stage);
+
+        // A couple of hit "clinks" while it works, like a player swinging a tool.
+        if (be.progress % 8 == 0) {
+            serverLevel.playSound(null, targetPos, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.3f, 1.0f);
+        }
+
+        if (be.progress < MINE_DURATION_TICKS) {
+            return;
+        }
+
+        // Finished this cycle: clear the cracks, actually mine, and start over.
+        be.progress = 0;
+        serverLevel.destroyBlockProgress(be.breakerId, targetPos, -1);
 
         BlockEntity targetBe = targetState.hasBlockEntity() ? serverLevel.getBlockEntity(targetPos) : null;
         List<ItemStack> drops = Block.getDrops(targetState, serverLevel, targetPos, targetBe);
@@ -86,8 +119,11 @@ public class AutoDrillBlockEntity extends BlockEntity {
         // triggers their own getDrops()/onRemove() handling (see
         // OreNodeBlock), which will have already been used above to compute
         // "drops" and will put the node back with a reduced amount unless
-        // it's now empty - exactly like being hit by hand or by a machine.
+        // it's now empty - exactly like being hit by hand.
         serverLevel.removeBlock(targetPos, false);
+
+        // Break particles + sound, same visual "poof" as a normal break.
+        serverLevel.levelEvent(2001, targetPos, Block.getId(targetState));
 
         for (ItemStack drop : drops) {
             ItemStack leftover = pushIntoAdjacentStorage(serverLevel, pos, drop);
@@ -118,7 +154,7 @@ public class AutoDrillBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.put("Inventory", inventory.serializeNBT(registries));
-        tag.putInt("Cooldown", cooldown);
+        tag.putInt("Progress", progress);
     }
 
     @Override
@@ -127,8 +163,8 @@ public class AutoDrillBlockEntity extends BlockEntity {
         if (tag.contains("Inventory")) {
             inventory.deserializeNBT(registries, tag.getCompound("Inventory"));
         }
-        if (tag.contains("Cooldown")) {
-            cooldown = tag.getInt("Cooldown");
+        if (tag.contains("Progress")) {
+            progress = tag.getInt("Progress");
         }
     }
 }
