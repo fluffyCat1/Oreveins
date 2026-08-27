@@ -46,9 +46,11 @@ repositories {
         }
     }
     maven {
-        url = 'https://maven.ithundxr.dev/snapshots' // Registrate
+        url = 'https://maven.createmod.net' // Create, Ponder, Flywheel
         content {
-            includeGroup 'com.tterrag.registrate'
+            includeGroup 'com.simibubi.create'
+            includeGroup 'net.createmod.ponder'
+            includeGroup 'dev.engine-room.flywheel'
         }
     }
 }
