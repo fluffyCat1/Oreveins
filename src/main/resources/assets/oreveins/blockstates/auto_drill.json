@@ -1,8 +1,8 @@
 {
   "variants": {
-    "facing=north": { "model": "create:block/drill" },
-    "facing=south": { "model": "create:block/drill", "y": 180 },
-    "facing=east":  { "model": "create:block/drill", "y": 90 },
-    "facing=west":  { "model": "create:block/drill", "y": 270 }
+    "facing=north": { "model": "create:block/mechanical_drill" },
+    "facing=south": { "model": "create:block/mechanical_drill", "y": 180 },
+    "facing=east":  { "model": "create:block/mechanical_drill", "y": 90 },
+    "facing=west":  { "model": "create:block/mechanical_drill", "y": 270 }
   }
 }
