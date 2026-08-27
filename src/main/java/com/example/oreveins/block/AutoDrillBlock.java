@@ -8,6 +8,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -18,21 +19,7 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 
 import javax.annotation.Nullable;
 
-/**
- * A kinetic (rotation-powered) auto drill. Place it with a shaft connected
- * to its back face and it facing a vein-node block from this mod - once it
- * is receiving rotation from Create, it mines the block in front of it on
- * its own, faster the more RPM it gets. Uses Create's own KineticBlock base
- * so it behaves like any other Create machine for shaft/gearbox
- * connections, stress display, goggle overlay, etc.
- *
- * Visually it reuses Create's Drill assets (see the blockstate/model json
- * next to this class) so it looks consistent with vanilla Create - note
- * this uses their static textures rather than their custom animated
- * renderer, so the head won't visually spin; only the attached shaft will,
- * same as most other simple Create-kinetic addon blocks.
- */
-public class AutoDrillBlock extends KineticBlock {
+public class AutoDrillBlock extends KineticBlock implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public AutoDrillBlock(Properties properties) {
@@ -74,5 +61,12 @@ public class AutoDrillBlock extends KineticBlock {
             return null;
         }
         return createTickerHelper(type, ModBlockEntities.AUTO_DRILL.get(), AutoDrillBlockEntity::serverTick);
+    }
+
+    @Nullable
+    @SuppressWarnings("unchecked")
+    private static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<E> createTickerHelper(
+            BlockEntityType<E> actualType, BlockEntityType<A> expectedType, BlockEntityTicker<? super A> ticker) {
+        return expectedType == actualType ? (BlockEntityTicker<E>) ticker : null;
     }
 }
