@@ -1,6 +1,6 @@
 {
   "itemGroup.oreveins": "Ore Veins",
-  "block.oreveins.auto_drill": "Auto Drill (needs redstone)",
+  "block.oreveins.auto_drill": "Auto Drill",
   "block.oreveins.iron_ore_vein": "Iron Ore Vein",
   "block.oreveins.gold_ore_vein": "Gold Ore Vein",
   "block.oreveins.diamond_ore_vein": "Diamond Ore Vein",
