@@ -1,65 +1,49 @@
 package com.example.oreveins.block;
 
-
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.material.MapColor;
-import org.jetbrains.annotations.Nullable;
- 
+
+import javax.annotation.Nullable;
+
 /**
- * Блок, аналогичный по духу Auto Drill из README, но:
- * - без зависимости от Create (не KineticBlock),
- * - ставится "лицом" к тому блоку, который будет ломать (как и раньше),
- * - активируется редстоун-сигналом, а не вращением.
+ * A simple iron-block-looking machine: give it a redstone signal and it
+ * mines the block directly beneath it, on a timer, for as long as it stays
+ * powered. Whatever it mines gets pushed into an adjacent inventory if one
+ * touches it, otherwise kept in its own small buffer (up to one stack).
  *
- * Регистрация — по аналогии с тем, как у вас в ModBlocks/ModBlockEntities
- * зарегистрирован oreveins:auto_drill (см. блокстейт/модели там же, их можно
- * переиспользовать или сделать свою простую модель).
+ * No Create dependency needed for this - just vanilla redstone.
  */
 public class AutoDrillBlock extends Block implements EntityBlock {
- 
+
     public AutoDrillBlock(Properties properties) {
-        super(properties.mapColor(MapColor.METAL).requiresCorrectToolForDrops().strength(3.5f));
-        this.registerDefaultState(this.stateDefinition.any()
-                .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH));
+        super(properties);
     }
- 
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(BlockStateProperties.HORIZONTAL_FACING);
-    }
- 
-    @Nullable
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        // Ставим "лицом" в сторону, куда смотрел игрок — так же, как Auto Drill.
-        return this.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite());
-    }
- 
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new RedstoneBreakerBlockEntity(ModBlockEntities.REDSTONE_BREAKER.get(), pos, state); // TODO: заменить на ваш реестр BlockEntity
+        return new AutoDrillBlockEntity(pos, state);
     }
- 
+
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : RedstoneBreakerBlockEntity.getTicker();
+        if (level.isClientSide()) {
+            return null;
+        }
+        return createTickerHelper(type, com.example.oreveins.registry.ModBlockEntities.AUTO_DRILL.get(), AutoDrillBlockEntity::serverTick);
     }
- 
-    @Override
-    public boolean hasAnalogOutputSignal(BlockState state) {
-        return false;
+
+    @Nullable
+    @SuppressWarnings("unchecked")
+    private static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<E> createTickerHelper(
+            BlockEntityType<E> actualType, BlockEntityType<A> expectedType, BlockEntityTicker<? super A> ticker) {
+        return expectedType == actualType ? (BlockEntityTicker<E>) ticker : null;
     }
 }

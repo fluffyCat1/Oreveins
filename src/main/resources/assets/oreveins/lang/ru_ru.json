@@ -1,6 +1,6 @@
 {
   "itemGroup.oreveins": "Рудные жилы",
-  "block.oreveins.auto_drill": "Автобур",
+  "block.oreveins.auto_drill": "Автобур (нужен редстоун)",
   "block.oreveins.iron_ore_vein": "Жила железной руды",
   "block.oreveins.gold_ore_vein": "Жила золотой руды",
   "block.oreveins.diamond_ore_vein": "Жила алмазной руды",

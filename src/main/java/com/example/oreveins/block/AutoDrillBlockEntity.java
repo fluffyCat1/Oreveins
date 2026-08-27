@@ -1,149 +1,134 @@
 package com.example.oreveins.block;
 
+import com.example.oreveins.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.Level;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.capabilities.Capabilities;
- 
+import net.neoforged.neoforge.items.ItemStackHandler;
+
 import java.util.List;
- 
+
 /**
- * Redstone-controlled block breaker.
- * Ломает блок перед собой (по facing), только пока получает редстоун-сигнал,
- * и переносит добытое в ближайшее хранилище / внутренний буфер / на землю.
+ * Ticks down while it has a redstone signal; once the timer hits zero it
+ * mines the block directly below it (reusing the exact same
+ * vein-node-aware drop logic as everything else - if the block below is
+ * one of our ore veins, {@link OreNodeBlock}'s own getDrops/onRemove
+ * handling kicks in automatically and it only takes a partial "hit", same
+ * as being mined by hand or by Create's drill).
  *
- * Логика переноса предмета скопирована 1:1 с идеи Auto Drill из README:
- * 1) вплотную стоящий инвентарь по любой из 6 граней
- * 2) внутренний буфер (9 слотов)
- * 3) выброс на землю, если всё занято
- *
- * Отличия от Auto Drill:
- * - НЕ зависит от Create / KineticBlockEntity, никакого RPM.
- * - Работает только пока level.hasNeighborSignal(pos) == true (есть редстоун-сигнал).
- * - Ломает любой блок перед собой (с базовыми проверками "нельзя ломать"),
- *   а не только жилу OreVein.
+ * The result is:
+ *  1) pushed into any inventory touching one of the drill's 6 faces
+ *     (nearest storage, in the simple "directly adjacent" sense);
+ *  2) otherwise kept in its own 1-slot, up-to-64-item internal buffer,
+ *     which any hopper/pipe can pull from (exposes the standard
+ *     item-handler capability);
+ *  3) if that's also full, dropped on the ground so nothing is lost.
  */
 public class AutoDrillBlockEntity extends BlockEntity {
- 
-    // ---- Настройки (можно вынести в конфиг по аналогии с OreVeinConfig) ----
-    private static final int BREAK_INTERVAL_TICKS = 20; // раз в секунду при наличии сигнала
-    private static final int BUFFER_SIZE = 9;
- 
-    private int cooldown = 0;
- 
-    private final ItemStackHandler buffer = new ItemStackHandler(BUFFER_SIZE) {
+    private static final int INTERVAL_TICKS = 20; // once per second while powered
+
+    private final ItemStackHandler inventory = new ItemStackHandler(1) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
         }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 64;
+        }
     };
- 
-    public RedstoneBreakerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
+
+    private int cooldown = INTERVAL_TICKS;
+
+    public AutoDrillBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.AUTO_DRILL.get(), pos, state);
     }
- 
-    public ItemStackHandler getBuffer() {
-        return buffer;
+
+    public IItemHandler getItemHandler() {
+        return inventory;
     }
- 
-    // ---- Тикер ----
-    public static <T extends BlockEntity> BlockEntityTicker<T> getTicker() {
-        return (level, pos, state, be) -> {
-            if (be instanceof RedstoneBreakerBlockEntity breaker) {
-                breaker.tick(level, pos, state);
-            }
-        };
-    }
- 
-    private void tick(Level level, BlockPos pos, BlockState state) {
-        if (level.isClientSide) return;
-        if (!(level instanceof ServerLevel serverLevel)) return;
- 
-        // Работаем ТОЛЬКО пока подан редстоун-сигнал. Без сигнала — простой,
-        // как и просили: "начинал ломать лишь тогда, когда ему дают редстоун сигнал".
+
+    public static void serverTick(Level level, BlockPos pos, BlockState state, AutoDrillBlockEntity be) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
         if (!level.hasNeighborSignal(pos)) {
-            cooldown = 0;
+            return; // no redstone signal - idle
+        }
+
+        if (--be.cooldown > 0) {
             return;
         }
- 
-        if (cooldown > 0) {
-            cooldown--;
-            return;
+        be.cooldown = INTERVAL_TICKS;
+
+        BlockPos targetPos = pos.below();
+        BlockState targetState = serverLevel.getBlockState(targetPos);
+        if (targetState.isAir() || targetState.getDestroySpeed(serverLevel, targetPos) < 0) {
+            return; // nothing to mine, or unbreakable (bedrock etc.)
         }
-        cooldown = BREAK_INTERVAL_TICKS;
- 
-        Direction facing = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
-        BlockPos targetPos = pos.relative(facing);
-        BlockState targetState = level.getBlockState(targetPos);
- 
-        if (!canBreak(serverLevel, targetPos, targetState)) {
-            return;
-        }
- 
-        // Получаем дропы блока БЕЗ реального spawn-а в мире, чтобы сразу
-        // распределить их по хранилищам (как у Auto Drill).
-        List<ItemStack> drops = net.minecraft.world.level.block.Block.getDrops(
-                targetState, serverLevel, targetPos,
-                serverLevel.getBlockEntity(targetPos)
-        );
- 
-        serverLevel.destroyBlock(targetPos, false); // false = сами распорядимся дропом
-        serverLevel.levelEvent(2001, targetPos, net.minecraft.world.level.block.Block.getId(targetState)); // звук/партиклы разрушения
- 
-        for (ItemStack stack : drops) {
-            distribute(level, pos, stack);
+
+        BlockEntity targetBe = targetState.hasBlockEntity() ? serverLevel.getBlockEntity(targetPos) : null;
+        List<ItemStack> drops = Block.getDrops(targetState, serverLevel, targetPos, targetBe);
+
+        // Actually remove/replace the block. For our own ore-vein nodes this
+        // triggers their own getDrops()/onRemove() handling (see
+        // OreNodeBlock), which will have already been used above to compute
+        // "drops" and will put the node back with a reduced amount unless
+        // it's now empty - exactly like being hit by hand or by a machine.
+        serverLevel.removeBlock(targetPos, false);
+
+        for (ItemStack drop : drops) {
+            ItemStack leftover = pushIntoAdjacentStorage(serverLevel, pos, drop);
+            if (!leftover.isEmpty()) {
+                leftover = ItemHandlerHelper.insertItemStacked(be.inventory, leftover, false);
+            }
+            if (!leftover.isEmpty()) {
+                Block.popResource(serverLevel, targetPos, leftover);
+            }
         }
     }
- 
-    private boolean canBreak(ServerLevel level, BlockPos pos, BlockState state) {
-        if (state.isAir()) return false;
-        if (state.getDestroySpeed(level, pos) < 0) return false; // unbreakable (bedrock и т.п.)
-        if (state.getBlock() == Blocks.BEDROCK) return false;
-        // По желанию можно добавить тег-блэклист/whitelist, проверку на BlockEntity (сундуки и т.п. не ломать)
-        if (level.getBlockEntity(pos) != null) return false;
-        return true;
-    }
- 
-    /**
-     * Перенос предмета: сначала вплотную стоящее хранилище по любой из 6 граней,
-     * затем внутренний буфер, затем — на землю.
-     */
-    private void distribute(Level level, BlockPos selfPos, ItemStack stack) {
-        ItemStack remaining = stack.copy();
- 
+
+    private static ItemStack pushIntoAdjacentStorage(ServerLevel level, BlockPos pos, ItemStack stack) {
         for (Direction dir : Direction.values()) {
-            if (remaining.isEmpty()) return;
-            BlockPos neighborPos = selfPos.relative(dir);
-            BlockEntity neighborBe = level.getBlockEntity(neighborPos);
-            if (neighborBe == null) continue;
- 
+            if (stack.isEmpty()) {
+                break;
+            }
+            BlockPos neighborPos = pos.relative(dir);
             IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, neighborPos, dir.getOpposite());
-            if (handler == null) continue;
- 
-            remaining = ItemHandlerHelper.insertItemStacked(handler, remaining, false);
+            if (handler != null) {
+                stack = ItemHandlerHelper.insertItemStacked(handler, stack, false);
+            }
         }
- 
-        if (!remaining.isEmpty()) {
-            remaining = ItemHandlerHelper.insertItemStacked(buffer, remaining, false);
+        return stack;
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.put("Inventory", inventory.serializeNBT(registries));
+        tag.putInt("Cooldown", cooldown);
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("Inventory")) {
+            inventory.deserializeNBT(registries, tag.getCompound("Inventory"));
         }
- 
-        if (!remaining.isEmpty()) {
-            // Буфер тоже полон — выбрасываем на землю перед блоком, чтобы не терять предмет.
-            ItemEntity entity = new ItemEntity(level,
-                    selfPos.getX() + 0.5, selfPos.getY() + 0.5, selfPos.getZ() + 0.5,
-                    remaining);
-            level.addFreshEntity(entity);
+        if (tag.contains("Cooldown")) {
+            cooldown = tag.getInt("Cooldown");
         }
     }
 }
