@@ -1,6 +1,24 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/block",
   "textures": {
-    "all": "minecraft:block/iron_block"
-  }
+    "particle": "#side",
+    "top": "oreveins:block/auto_drill_top",
+    "bottom": "oreveins:block/auto_drill_bottom",
+    "side": "oreveins:block/auto_drill_side",
+    "front": "oreveins:block/auto_drill_front"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down":  { "uv": [0, 0, 16, 16], "texture": "#bottom", "cullface": "down" },
+        "up":    { "uv": [0, 0, 16, 16], "texture": "#top",    "cullface": "up" },
+        "north": { "uv": [0, 0, 16, 16], "texture": "#front",  "cullface": "north" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#side",   "cullface": "south" },
+        "west":  { "uv": [0, 0, 16, 16], "texture": "#side",   "cullface": "west" },
+        "east":  { "uv": [0, 0, 16, 16], "texture": "#side",   "cullface": "east" }
+      }
+    }
+  ]
 }

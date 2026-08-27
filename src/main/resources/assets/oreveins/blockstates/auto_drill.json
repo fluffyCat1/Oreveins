@@ -1,5 +1,8 @@
 {
   "variants": {
-    "": { "model": "oreveins:block/auto_drill" }
+    "facing=north": { "model": "oreveins:block/auto_drill" },
+    "facing=south": { "model": "oreveins:block/auto_drill", "y": 180 },
+    "facing=east":  { "model": "oreveins:block/auto_drill", "y": 90 },
+    "facing=west":  { "model": "oreveins:block/auto_drill", "y": 270 }
   }
 }
