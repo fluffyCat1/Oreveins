@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": { "type": "neoforge:mod_loaded", "modid": "create" }
+    }
+  ],
+  "category": "misc",
+  "pattern": [
+    "N N",
+    "NCN",
+    " B "
+  ],
+  "key": {
+    "N": { "item": "minecraft:iron_nugget" },
+    "C": { "item": "minecraft:iron_block" },
+    "B": { "item": "minecraft:chest" }
+  },
+  "result": {
+    "id": "oreveins:auto_drill",
+    "count": 1
+  }
+}
