@@ -8,5 +8,7 @@
   "block.oreveins.redstone_ore_vein": "Redstone Ore Vein",
   "block.oreveins.lapis_ore_vein": "Lapis Ore Vein",
   "block.oreveins.coal_ore_vein": "Coal Ore Vein",
-  "block.oreveins.copper_ore_vein": "Copper Ore Vein"
+  "block.oreveins.copper_ore_vein": "Copper Ore Vein",
+  "block.oreveins.quartz_ore_vein": "Quartz Ore Vein",
+  "block.oreveins.zinc_ore_vein": "Zinc Ore Vein"
 }

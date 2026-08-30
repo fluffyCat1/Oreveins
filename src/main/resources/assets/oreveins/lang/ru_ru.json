@@ -8,5 +8,7 @@
   "block.oreveins.redstone_ore_vein": "Жила редстоуна",
   "block.oreveins.lapis_ore_vein": "Жила лазурита",
   "block.oreveins.coal_ore_vein": "Жила угля",
-  "block.oreveins.copper_ore_vein": "Жила меди"
+  "block.oreveins.copper_ore_vein": "Жила меди",
+  "block.oreveins.quartz_ore_vein": "Жила кварца",
+  "block.oreveins.zinc_ore_vein": "Жила цинка"
 }

@@ -17,7 +17,13 @@ public enum OreVeinType {
     REDSTONE("redstone_ore_vein", "minecraft:block/redstone_ore", 3.0f, 3.0f, true),
     LAPIS("lapis_ore_vein", "minecraft:block/lapis_ore", 3.0f, 3.0f, true),
     COAL("coal_ore_vein", "minecraft:block/coal_ore", 3.0f, 3.0f, false),
-    COPPER("copper_ore_vein", "minecraft:block/copper_ore", 3.0f, 3.0f, true);
+    COPPER("copper_ore_vein", "minecraft:block/copper_ore", 3.0f, 3.0f, true),
+    QUARTZ("quartz_ore_vein", "minecraft:block/nether_quartz_ore", 3.0f, 3.0f, true),
+    // Zinc uses Create's own ore texture - looks correct only if Create is
+    // installed (this mod doesn't require Create anymore, so without it
+    // this one specific block's texture will show as missing, same as any
+    // other optional cross-mod visual reference).
+    ZINC("zinc_ore_vein", "create:block/zinc_ore", 3.0f, 3.0f, true);
 
     private final String registryName;
     private final String texture;

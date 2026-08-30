@@ -92,6 +92,8 @@ public final class OreVeinConfig {
             case LAPIS -> new VeinSettings(1500, "minecraft:lapis_lazuli", 2, 5, 1);
             case COAL -> new VeinSettings(1500, "minecraft:coal", 2, 5, 0);
             case COPPER -> new VeinSettings(1500, "minecraft:raw_copper", 2, 5, 0);
+            case QUARTZ -> new VeinSettings(1500, "minecraft:quartz", 2, 5, 1);
+            case ZINC -> new VeinSettings(1000, "create:raw_zinc", 1, 3, 0);
         };
     }
 
