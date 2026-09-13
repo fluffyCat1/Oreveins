@@ -11,6 +11,7 @@
     "oreveins:lapis_ore_vein",
     "oreveins:coal_ore_vein",
     "oreveins:copper_ore_vein",
-    "oreveins:zinc_ore_vein"
+    "oreveins:zinc_ore_vein",
+    "oreveins:andesite_ore_vein"
   ]
 }

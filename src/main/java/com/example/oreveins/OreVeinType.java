@@ -23,7 +23,8 @@ public enum OreVeinType {
     // installed (this mod doesn't require Create anymore, so without it
     // this one specific block's texture will show as missing, same as any
     // other optional cross-mod visual reference).
-    ZINC("zinc_ore_vein", "create:block/zinc_ore", 3.0f, 3.0f, true);
+    ZINC("zinc_ore_vein", "create:block/zinc_ore", 3.0f, 3.0f, true),
+    ANDESITE("andesite_ore_vein", "minecraft:block/andesite", 1.5f, 6.0f, false);
 
     private final String registryName;
     private final String texture;
