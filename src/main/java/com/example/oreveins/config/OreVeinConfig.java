@@ -95,6 +95,7 @@ public final class OreVeinConfig {
             case QUARTZ -> new VeinSettings(1500, "minecraft:quartz", 2, 5, 1);
             case ZINC -> new VeinSettings(1000, "create:raw_zinc", 1, 3, 0);
             case ANDESITE -> new VeinSettings(2000, "minecraft:andesite", 3, 8, 0);
+            case SULFUR -> new VeinSettings(1200, "oreveins:sulfur_dust", 2, 5, 0);
         };
     }
 

@@ -18,6 +18,10 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> AUTO_DRILL_ITEM =
             ITEMS.registerSimpleBlockItem("auto_drill", ModBlocks.AUTO_DRILL);
 
+    /** Dropped by the sulfur vein; used in the mixing recipe for gunpowder. */
+    public static final DeferredItem<Item> SULFUR_DUST =
+            ITEMS.registerSimpleItem("sulfur_dust");
+
     static {
         for (OreVeinType type : OreVeinType.values()) {
             DeferredItem<BlockItem> item = ITEMS.registerSimpleBlockItem(

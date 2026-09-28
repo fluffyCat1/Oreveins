@@ -18,6 +18,7 @@ public final class ModCreativeTab {
                     .icon(() -> ModItems.get(OreVeinType.DIAMOND).toStack())
                     .displayItems((params, output) -> {
                         output.accept(ModItems.AUTO_DRILL_ITEM.toStack());
+                        output.accept(ModItems.SULFUR_DUST.toStack());
                         for (OreVeinType type : OreVeinType.values()) {
                             output.accept(ModItems.get(type).toStack());
                         }

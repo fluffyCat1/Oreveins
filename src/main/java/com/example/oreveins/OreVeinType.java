@@ -24,7 +24,13 @@ public enum OreVeinType {
     // this one specific block's texture will show as missing, same as any
     // other optional cross-mod visual reference).
     ZINC("zinc_ore_vein", "create:block/zinc_ore", 3.0f, 3.0f, true),
-    ANDESITE("andesite_ore_vein", "minecraft:block/andesite", 1.5f, 6.0f, false);
+    ANDESITE("andesite_ore_vein", "minecraft:block/andesite", 1.5f, 6.0f, false),
+    // Sulfur has no vanilla/Create texture to borrow - it's our own custom
+    // texture file. Draw a 16x16 PNG and save it to EXACTLY this path:
+    //   src/main/resources/assets/oreveins/textures/block/sulfur_ore_vein.png
+    // (a placeholder solid-color image is already there so it won't show
+    // as missing-texture until you replace it).
+    SULFUR("sulfur_ore_vein", "oreveins:block/sulfur_ore_vein", 3.0f, 3.0f, true);
 
     private final String registryName;
     private final String texture;
