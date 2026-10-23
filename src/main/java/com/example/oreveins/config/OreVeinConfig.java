@@ -20,8 +20,7 @@ import java.util.Map;
 /**
  * Reads (and, on first run, writes) config/oreveins-common.json.
  *
- * The file maps a vein-type key (iron, gold, diamond, emerald, redstone,
- * lapis, coal, copper) to its {@link VeinSettings}. Edit the file, then
+ * The file maps a vein block id (e.g. "oreveins:iron_ore_vein") to its {@link VeinSettings}. Edit the file, then
  * restart the game/server to apply changes - it is loaded once, early,
  * during mod construction, because block entities need it as soon as a
  * vein node block is placed or loaded.
@@ -52,14 +51,17 @@ public final class OreVeinConfig {
             write(path, byKey);
         }
 
-        // Fill in anything missing from a partially-edited file with defaults,
-        // so the mod never crashes because the user removed/renamed an entry.
-        Map<String, VeinSettings> merged = defaults();
-        merged.putAll(byKey);
-
+        // Each entry is looked up by full block id ("oreveins:iron_ore_vein"),
+        // falling back to the old short key ("iron") and finally to the
+        // built-in default, so the mod never crashes because the user
+        // removed/renamed an entry.
         SETTINGS.clear();
         for (OreVeinType type : OreVeinType.values()) {
-            SETTINGS.put(type, merged.getOrDefault(type.configKey(), defaultFor(type)));
+            VeinSettings found = byKey.get(blockId(type));
+            if (found == null) {
+                found = byKey.get(type.configKey());
+            }
+            SETTINGS.put(type, found != null ? found : defaultFor(type));
         }
     }
 
@@ -77,9 +79,14 @@ public final class OreVeinConfig {
     private static Map<String, VeinSettings> defaults() {
         Map<String, VeinSettings> map = new LinkedHashMap<>();
         for (OreVeinType type : OreVeinType.values()) {
-            map.put(type.configKey(), defaultFor(type));
+            map.put(blockId(type), defaultFor(type));
         }
         return map;
+    }
+
+    /** Config key = the vein block's full registry id, e.g. "oreveins:iron_ore_vein". */
+    public static String blockId(OreVeinType type) {
+        return com.example.oreveins.OreVeinsMod.MOD_ID + ":" + type.getRegistryName();
     }
 
     private static VeinSettings defaultFor(OreVeinType type) {

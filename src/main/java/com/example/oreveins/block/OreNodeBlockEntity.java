@@ -18,7 +18,7 @@ public class OreNodeBlockEntity extends BlockEntity {
         // If this node is being loaded from disk, loadAdditional() below will
         // overwrite this with the saved value right after construction.
         OreVeinType type = state.getBlock() instanceof OreNodeBlock oreNodeBlock ? oreNodeBlock.getVeinType() : null;
-        this.remaining = type != null ? OreVeinConfig.get(type).total_amount : 0;
+        this.remaining = type != null ? OreVeinConfig.get(type).amount_per_block : 0;
     }
 
     public int getRemaining() {

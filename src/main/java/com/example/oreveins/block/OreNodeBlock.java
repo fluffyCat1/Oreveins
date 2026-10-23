@@ -4,13 +4,9 @@ import com.example.oreveins.OreVeinType;
 import com.example.oreveins.config.OreVeinConfig;
 import com.example.oreveins.config.VeinSettings;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ExperienceOrb;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -27,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * A block that behaves like a small "resource node": mining it doesn't
@@ -83,45 +78,34 @@ public class OreNodeBlock extends Block implements EntityBlock {
     @Override
     protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         Level level = params.getLevel();
-        if (level == null || level.isClientSide()) {
+        if (!(level instanceof ServerLevel serverLevel)) {
             return Collections.emptyList();
         }
         BlockPos pos = BlockPos.containing(params.getParameter(LootContextParams.ORIGIN));
 
-        VeinSettings settings = OreVeinConfig.get(veinType);
+        // One "hit" taken from the shared pool of the whole vein group.
+        VeinGroup.HitResult result = VeinGroup.hit(serverLevel, pos, this);
 
-        int remaining = settings.total_amount;
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof OreNodeBlockEntity node) {
-            remaining = node.getRemaining();
+        if (result.depleted()) {
+            // Pool is empty: this block becomes stone (see onRemove) and so
+            // does the rest of the group, right now.
+            PENDING.put(pos.immutable(), PendingRespawn.stone());
+            VeinGroup.clearGroup(serverLevel, result.group(), pos);
+        } else {
+            PENDING.put(pos.immutable(), PendingRespawn.ore(result.hitBlockRemaining()));
         }
 
-        if (remaining <= 0) {
-            PENDING.put(pos.immutable(), PendingRespawn.stone());
+        if (result.mined() <= 0) {
             return Collections.emptyList();
         }
 
-        int hit = randomBetween(settings.min_per_hit, settings.max_per_hit);
-        hit = Math.min(hit, remaining);
-        if (hit <= 0) {
-            hit = 1;
-        }
-        int newRemaining = remaining - hit;
-
-        PENDING.put(pos.immutable(), newRemaining > 0
-                ? PendingRespawn.ore(newRemaining)
-                : PendingRespawn.stone());
-
-        if (settings.xp_per_hit > 0 && level instanceof ServerLevel serverLevel) {
+        VeinSettings settings = OreVeinConfig.get(veinType);
+        if (settings.xp_per_hit > 0) {
             ExperienceOrb.award(serverLevel, pos.getCenter(), settings.xp_per_hit);
         }
 
-        ResourceLocation dropId = ResourceLocation.tryParse(settings.drop_item);
-        Item dropItem = dropId != null ? BuiltInRegistries.ITEM.get(dropId) : null;
-        if (dropItem == null || dropItem == Items.AIR) {
-            return Collections.emptyList();
-        }
-        return List.of(new ItemStack(dropItem, hit));
+        ItemStack drop = VeinGroup.makeDrop(this, result.mined());
+        return drop.isEmpty() ? Collections.emptyList() : List.of(drop);
     }
 
     @Override
@@ -143,13 +127,6 @@ public class OreNodeBlock extends Block implements EntityBlock {
                 }
             });
         }
-    }
-
-    private static int randomBetween(int min, int max) {
-        if (max <= min) {
-            return Math.max(min, 1);
-        }
-        return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
 
     private record PendingRespawn(boolean placeOre, int remaining) {

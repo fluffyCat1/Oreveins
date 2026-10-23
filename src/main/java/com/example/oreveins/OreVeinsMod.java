@@ -13,7 +13,7 @@ public class OreVeinsMod {
     public static final String MOD_ID = "oreveins";
 
     public OreVeinsMod(IEventBus modEventBus) {
-        // Config is read/created FIRST: block entities read total_amount as
+        // Config is read/created FIRST: block entities read amount_per_block as
         // soon as they're constructed, which can happen very early (e.g.
         // during world generation on server start).
         OreVeinConfig.load();
