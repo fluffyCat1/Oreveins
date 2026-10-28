@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_nether",
+  "step": "underground_ores",
+  "features": [
+    "oreveins:quartz_ore_vein"
+  ]
+}
