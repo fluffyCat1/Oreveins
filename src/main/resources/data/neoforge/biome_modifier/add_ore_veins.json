@@ -13,6 +13,7 @@
     "oreveins:copper_ore_vein",
     "oreveins:zinc_ore_vein",
     "oreveins:andesite_ore_vein",
-    "oreveins:sulfur_ore_vein"
+    "oreveins:sulfur_ore_vein",
+    "oreveins:platinum_ore_vein"
   ]
 }

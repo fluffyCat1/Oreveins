@@ -13,5 +13,6 @@
   "block.oreveins.zinc_ore_vein": "Жила цинка",
   "block.oreveins.andesite_ore_vein": "Жила андезита",
   "block.oreveins.sulfur_ore_vein": "Жила серы",
-  "item.oreveins.sulfur_dust": "Серная пыль"
+  "item.oreveins.sulfur_dust": "Серная пыль",
+  "block.oreveins.platinum_ore_vein": "Жила платины"
 }

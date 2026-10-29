@@ -13,5 +13,6 @@
   "block.oreveins.zinc_ore_vein": "Zinc Ore Vein",
   "block.oreveins.andesite_ore_vein": "Andesite Vein",
   "block.oreveins.sulfur_ore_vein": "Sulfur Vein",
-  "item.oreveins.sulfur_dust": "Sulfur Dust"
+  "item.oreveins.sulfur_dust": "Sulfur Dust",
+  "block.oreveins.platinum_ore_vein": "Platinum Vein"
 }
