@@ -35,13 +35,13 @@ public final class OreNodeMining {
             return ItemStack.EMPTY;
         }
 
-        VeinSettings settings = OreVeinConfig.get(oreBlock.getVeinType());
-        BlockEntity be = level.getBlockEntity(pos);
+    VeinSettings settings = OreVeinConfig.get(oreBlock.getVeinType());
+    BlockEntity be = level.getBlockEntity(pos);
 
-        int remaining = settings.total_amount;
-        if (be instanceof OreNodeBlockEntity node) {
-            remaining = node.getRemaining();
-        }
+    int remaining = settings.amount_per_block;
+    if (be instanceof OreNodeBlockEntity node) {
+        remaining = node.getRemaining();
+    }
 
         if (remaining <= 0) {
             level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
