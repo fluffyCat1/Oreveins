@@ -30,7 +30,11 @@ public enum OreVeinType {
     //   src/main/resources/assets/oreveins/textures/block/sulfur_ore_vein.png
     // (a placeholder solid-color image is already there so it won't show
     // as missing-texture until you replace it).
-    SULFUR("sulfur_ore_vein", "oreveins:block/sulfur_ore_vein", 3.0f, 3.0f, true);
+    SULFUR("sulfur_ore_vein", "oreveins:block/sulfur_ore_vein", 3.0f, 3.0f, true),
+    // Platinum uses the ore texture from Create Propulsion: Simulated
+    // (mod id "createpropulsion"); without that mod installed this one
+    // block's texture shows as missing, same as zinc without Create.
+    PLATINUM("platinum_ore_vein", "createpropulsion:block/platinum_ore", 3.0f, 3.0f, true);
 
     private final String registryName;
     private final String texture;
