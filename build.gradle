@@ -42,6 +42,7 @@ repositories {
 
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
+    compileOnly files("libs/createbigcannons-5.11.7+mc.1.21.1.jar")
 }
 
 tasks.withType(ProcessResources).configureEach {
