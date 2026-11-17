@@ -38,7 +38,7 @@ public final class OreNodeMining {
         VeinSettings settings = OreVeinConfig.get(oreBlock.getVeinType());
         BlockEntity be = level.getBlockEntity(pos);
 
-        int remaining = settings.amount_per_block;
+        int remaining = settings.amount_per_block
 
         if (be instanceof OreNodeBlockEntity node) {
             remaining = node.getRemaining();
