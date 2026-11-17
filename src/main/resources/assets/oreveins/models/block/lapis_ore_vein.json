@@ -1,4 +1,7 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": { "all": "minecraft:block/lapis_ore" }
+  "parent": "oreveins:block/ore_vein_grass",
+  "render_type": "minecraft:cutout_mipped",
+  "textures": {
+    "ore": "oreveins:block/lapis_ore_vein_overlay"
+  }
 }
